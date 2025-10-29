@@ -20,7 +20,7 @@ public class WatchlistService {
     @Autowired
     private UserRepository userRepository;
 
-    public void addStock(Long userId, String ticker) {
+    public Watchlist addStock(Long userId, String ticker) {
         if (repository.existsByUser_IdAndTicker(userId, ticker)) {
             throw new RuntimeException("Stock already in watchlist");
         }
@@ -39,13 +39,27 @@ public class WatchlistService {
             throw new RuntimeException("User does not exist");
         }
         repository.save(watchlist);
+        return watchlist;
     }
 
     public List<Watchlist> getUserWatchlist(Long userId) {
         return repository.findByUser_Id(userId);
     }
 
-    public void removeStock(Long watchlistId) {
-        repository.deleteById(watchlistId);
+    public void removeStock(Long watchlistId, Long userId) {
+        Optional<Watchlist> watchlistOptional = repository.findById(watchlistId);
+
+        if (watchlistOptional.isPresent()) {
+            Watchlist watchlist = watchlistOptional.get();
+            if (watchlist.getUser().getId().equals(userId)) {
+                repository.delete(watchlist);
+            }
+            else {
+                throw new RuntimeException("Invalid user");
+            }
+        }
+        else {
+            throw new RuntimeException("Invalid watchlist");
+        }
     }
 }
